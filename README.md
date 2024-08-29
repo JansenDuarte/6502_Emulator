@@ -2,7 +2,7 @@
  Tiny adventure in emulating CPUs
  
 ## Project inspired by:
-(DavePoo @ YT)[https://www.youtube.com/@DavePoo]
+[DavePoo @ YT](https://www.youtube.com/@DavePoo)
 
 ---
 
