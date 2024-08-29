@@ -30,3 +30,7 @@
 *.exe
 *.out
 *.app
+
+#Vs Code
+*.vscode
+*.code-workspace
