@@ -44,6 +44,18 @@ public:
         }
         return Data[_address];
     }
+
+    // Write 2 bytes
+    void WriteWord(u32 &_cycles, Word _data, u32 _address)
+    {
+        Data[_address] = _data & 0xFF;
+        Data[_address + 1] = (_data >> 8);
+        _cycles -= 2;
+    }
+
+    Word ReadWord(u32 &_cycles, u32 _address)
+    {
+    }
 };
 
 struct CPU
@@ -83,11 +95,25 @@ struct CPU
         return data;
     }
 
+    Word FetchWord(u32 &_cycles, Memory &_memory)
+    {
+        Word data = _memory[PC];
+        PC++;
+        data |= (_memory[PC] << 8);
+        _cycles -= 2;
+        return data;
+    }
+
     Byte ReadByte(u32 &_cycles, Byte _address, Memory &_memory)
     {
         Byte data = _memory[_address];
         _cycles--;
         return data;
+    }
+
+    Word ReadWord(u32 &_cycles, Word _address, Memory &_memory)
+    {
+        Word data = _memory
     }
 
     void LDASetStatus()
@@ -99,6 +125,8 @@ struct CPU
     static constexpr Byte INS_LDA_IM = 0xA9;
     static constexpr Byte INS_LDA_ZP = 0xA5;
     static constexpr Byte INS_LDA_ZPX = 0xB5;
+    static constexpr Byte INS_LDA_ABS = 0xAD;
+    // static constexpr Byte INS_JSR = 0x20;
 
     void Execute(u32 _cycles, Memory &_memory)
     {
@@ -124,14 +152,31 @@ struct CPU
             case INS_LDA_ZPX:
             {
                 Byte zeroPageAdress = FetchByte(_cycles, _memory);
+                zeroPageAdress += X;
+                zeroPageAdress %= 0xFF;
                 A = ReadByte(_cycles, zeroPageAdress, _memory);
                 LDASetStatus();
             }
             break;
+            case INS_LDA_ABS:
+            {
+                Word zeroPageAdress = FetchByte(_cycles, _memory);
+                A = ReadWord(_cycles, zeroPageAdress, _memory);
+                LDASetStatus();
+            }
+            break;
+                // case INS_JSR:
+                // {
+                //     Word jmpAdress = FetchWord(_cycles, _memory);
+                //     _memory[SP] = PC - 1;
+                //     _cycles--;
+                // }
+                // break;
 
             default:
             {
                 printf("Instruction not handled %d", instruction);
+                return;
             }
             break;
             }
@@ -145,7 +190,7 @@ int main()
     Memory mem;
     cpu.Reset(mem);
     // inline program - load accumulator with 69
-    mem[0xFFFC] = CPU::INS_LDA_ZP;
+    mem[0xFFFC] = CPU::INS_LDA_ZPX;
     mem[0xFFFD] = 0x42;
     mem[0x0042] = 69;
     // inline program - load accumulator with 69
