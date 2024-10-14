@@ -87,7 +87,22 @@ struct CPU
         _memory.Initialize();
     }
 
-    Byte FetchByte(u32 &_cycles, Memory &_memory)
+    Byte FetchByte(u32 &_cycles, Byte _address, Memory &_memory)
+    {
+        Byte data = _memory[_address];
+        _cycles--;
+        return data;
+    }
+
+    Word FetchWord(u32 &_cycles, Word _address, Memory &_memory)
+    {
+        Word data = _memory[_address];
+        data |= (_memory[_address + 1] << 8);
+        _cycles -= 2;
+        return data;
+    }
+
+    Byte ReadByte(u32 &_cycles, Memory &_memory)
     {
         Byte data = _memory[PC];
         PC++;
@@ -95,25 +110,11 @@ struct CPU
         return data;
     }
 
-    Word FetchWord(u32 &_cycles, Memory &_memory)
+    Word ReadWord(u32 &_cycles, Memory &_memory)
     {
         Word data = _memory[PC];
         PC++;
         data |= (_memory[PC] << 8);
-        _cycles -= 2;
-        return data;
-    }
-
-    Byte ReadByte(u32 &_cycles, Byte _address, Memory &_memory)
-    {
-        Byte data = _memory[_address];
-        _cycles--;
-        return data;
-    }
-
-    Word ReadWord(u32 &_cycles, Word _address, Memory &_memory)
-    {
-        Word data = _memory[_address];
         _cycles -= 2;
         return data;
     }
@@ -134,36 +135,36 @@ struct CPU
     {
         while (_cycles > 0)
         {
-            Byte instruction = FetchByte(_cycles, _memory);
+            Byte instruction = ReadByte(_cycles, _memory);
             switch (instruction)
             {
             case INS_LDA_IM:
             {
-                Byte value = FetchByte(_cycles, _memory);
+                Byte value = ReadByte(_cycles, _memory);
                 A = value;
                 LDASetStatus();
             }
             break;
             case INS_LDA_ZP:
             {
-                Byte zeroPageAdress = FetchByte(_cycles, _memory);
-                A = ReadByte(_cycles, zeroPageAdress, _memory);
+                Byte zeroPageAdress = ReadByte(_cycles, _memory);
+                A = FetchByte(_cycles, zeroPageAdress, _memory);
                 LDASetStatus();
             }
             break;
             case INS_LDA_ZPX:
             {
-                Byte zeroPageAdress = FetchByte(_cycles, _memory);
+                Byte zeroPageAdress = ReadByte(_cycles, _memory);
                 zeroPageAdress += X;
                 zeroPageAdress %= 0xFF;
-                A = ReadByte(_cycles, zeroPageAdress, _memory);
+                A = FetchByte(_cycles, zeroPageAdress, _memory);
                 LDASetStatus();
             }
             break;
             case INS_LDA_ABS:
             {
-                Word zeroPageAdress = FetchByte(_cycles, _memory);
-                A = ReadWord(_cycles, zeroPageAdress, _memory);
+                Word zeroPageAdress = ReadWord(_cycles, _memory);
+                A = FetchWord(_cycles, zeroPageAdress, _memory);
                 LDASetStatus();
             }
             break;
