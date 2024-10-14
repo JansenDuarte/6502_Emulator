@@ -113,7 +113,9 @@ struct CPU
 
     Word ReadWord(u32 &_cycles, Word _address, Memory &_memory)
     {
-        Word data = _memory
+        Word data = _memory[_address];
+        _cycles -= 2;
+        return data;
     }
 
     void LDASetStatus()
