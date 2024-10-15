@@ -125,6 +125,7 @@ struct CPU
         N = (A & 0b10000000) > 0;
     }
 
+    static constexpr Byte INS_NOP = 0xEA;
     static constexpr Byte INS_LDA_IM = 0xA9;
     static constexpr Byte INS_LDA_ZP = 0xA5;
     static constexpr Byte INS_LDA_ZPX = 0xB5;
@@ -138,6 +139,12 @@ struct CPU
             Byte instruction = ReadByte(_cycles, _memory);
             switch (instruction)
             {
+            case INS_NOP:
+            {
+                Byte value = ReadByte(_cycles, _memory);
+                _cycles--;
+            }
+            break;
             case INS_LDA_IM:
             {
                 Byte value = ReadByte(_cycles, _memory);
