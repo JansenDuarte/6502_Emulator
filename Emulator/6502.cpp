@@ -53,8 +53,14 @@ public:
         _cycles -= 2;
     }
 
+    // Read 2 bytes
     Word ReadWord(u32 &_cycles, u32 _address)
     {
+        Word data = Data[_address];
+        _address++;
+        data |= (Data[_address] << 8);
+        _cycles -= 2;
+        return data;
     }
 };
 
@@ -130,6 +136,8 @@ struct CPU
     static constexpr Byte INS_LDA_ZP = 0xA5;
     static constexpr Byte INS_LDA_ZPX = 0xB5;
     static constexpr Byte INS_LDA_ABS = 0xAD;
+    static constexpr Byte INS_JMP_ABS = 0x4C;
+    static constexpr Byte INS_JMP_IND = 0x6C;
     static constexpr Byte INS_JSR = 0x20;
 
     void Execute(u32 _cycles, Memory &_memory)
@@ -180,7 +188,21 @@ struct CPU
                 Word jmpToAddress = ReadWord(_cycles, _memory);
                 _memory.WriteWord(_cycles, PC, SP);
                 PC = jmpToAddress;
-                _cycles -= 2;
+                _cycles--;
+            }
+            break;
+            case INS_JMP_ABS:
+            {
+                Word jmpTo = ReadWord(_cycles, _memory);
+                PC = jmpTo;
+            }
+            break;
+
+            case INS_JMP_IND:
+            {
+                Word jmpTo = ReadWord(_cycles, _memory);
+                jmpTo = FetchWord(_cycles, jmpTo, _memory);
+                PC = jmpTo;
             }
             break;
 
@@ -194,17 +216,3 @@ struct CPU
         }
     }
 };
-
-int main()
-{
-    CPU cpu;
-    Memory mem;
-    cpu.Reset(mem);
-    // inline program - load accumulator with 69
-    mem[0xFFFC] = CPU::INS_LDA_ZPX;
-    mem[0xFFFD] = 0x42;
-    mem[0x0042] = 69;
-    // inline program - load accumulator with 69
-    cpu.Execute(3, mem);
-    return 0;
-}
