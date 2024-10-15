@@ -129,7 +129,7 @@ struct CPU
     static constexpr Byte INS_LDA_ZP = 0xA5;
     static constexpr Byte INS_LDA_ZPX = 0xB5;
     static constexpr Byte INS_LDA_ABS = 0xAD;
-    // static constexpr Byte INS_JSR = 0x20;
+    static constexpr Byte INS_JSR = 0x20;
 
     void Execute(u32 _cycles, Memory &_memory)
     {
@@ -168,13 +168,14 @@ struct CPU
                 LDASetStatus();
             }
             break;
-                // case INS_JSR:
-                // {
-                //     Word jmpAdress = FetchWord(_cycles, _memory);
-                //     _memory[SP] = PC - 1;
-                //     _cycles--;
-                // }
-                // break;
+            case INS_JSR:
+            {
+                Word jmpToAddress = ReadWord(_cycles, _memory);
+                _memory.WriteWord(_cycles, PC, SP);
+                PC = jmpToAddress;
+                _cycles -= 2;
+            }
+            break;
 
             default:
             {
