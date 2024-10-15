@@ -93,8 +93,15 @@ private:
 private:
     // Memory Lookup Methods
 
-    // 'Fetch' as in 'Go look for it in this address
+    // 'Fetch' as in 'Go look for it in this address'
     Byte FetchByte(u32 &_cycles, Byte _address, Memory &_memory)
+    {
+        Byte data = _memory[_address];
+        _cycles--;
+        return data;
+    }
+
+    Byte FetchByte(u32 &_cycles, Word _address, Memory &_memory)
     {
         Byte data = _memory[_address];
         _cycles--;
@@ -140,14 +147,18 @@ private:
 #pragma region INSTRUCTION CODES
 
 public:
-    static constexpr Byte INS_NOP = 0xEA;
-    static constexpr Byte INS_LDA_IM = 0xA9;
-    static constexpr Byte INS_LDA_ZP = 0xA5;
-    static constexpr Byte INS_LDA_ZPX = 0xB5;
-    static constexpr Byte INS_LDA_ABS = 0xAD;
-    static constexpr Byte INS_JMP_ABS = 0x4C;
-    static constexpr Byte INS_JMP_IND = 0x6C;
-    static constexpr Byte INS_JSR = 0x20;
+    static constexpr Byte INS_NOP = 0xEA;       // No operation
+    static constexpr Byte INS_LDA_IM = 0xA9;    // Load Accumulator Imidiate
+    static constexpr Byte INS_LDA_ZP = 0xA5;    // Load Accumulator Zero Page Index
+    static constexpr Byte INS_LDA_ZPX = 0xB5;   // Load Accumulator Zero Page X
+    static constexpr Byte INS_LDA_ABS = 0xAD;   // Load Accumulator Absolute
+    static constexpr Byte INS_LDA_ABS_X = 0xBD; // Load Accumulator Absolute X
+    static constexpr Byte INS_LDA_ABS_Y = 0xB9; // Load Accumulator Absolute Y
+    static constexpr Byte INS_LDA_IND_X = 0xA1; // Load Accumulator Indirect X
+    static constexpr Byte INS_LDA_IND_Y = 0xB1; // Load Accumulator Indirect Y
+    static constexpr Byte INS_JMP_ABS = 0x4C;   // Jump Absolute
+    static constexpr Byte INS_JMP_IND = 0x6C;   // Jump Indirect
+    static constexpr Byte INS_JSR = 0x20;       // Jump to Subroutine
 
 #pragma endregion // INSTRUCTION CODES
 
@@ -202,8 +213,44 @@ public:
             break;
             case INS_LDA_ABS:
             {
-                Word zeroPageAdress = ReadWord(_cycles, _memory);
-                A = FetchWord(_cycles, zeroPageAdress, _memory);
+                Word zeroPageAddress = ReadWord(_cycles, _memory);
+                A = FetchWord(_cycles, zeroPageAddress, _memory);
+                LDASetStatus();
+            }
+            break;
+            case INS_LDA_ABS_X:
+            {
+                Word address = ReadWord(_cycles, _memory);
+                address += X;
+                A = FetchByte(_cycles, address, _memory);
+                LDASetStatus();
+            }
+            break;
+            case INS_LDA_ABS_Y:
+            {
+                Word address = ReadWord(_cycles, _memory);
+                address += Y;
+                A = FetchByte(_cycles, address, _memory);
+                LDASetStatus();
+            }
+            break;
+            case INS_LDA_IND_X:
+            {
+                // This is in zero page address.
+                // Meaning that the CPU only cares for the least sig. bits
+                Byte address = ReadByte(_cycles, _memory);
+                address += X;
+                address %= 0xFF;
+                A = FetchByte(_cycles, address, _memory);
+                LDASetStatus();
+            }
+            break;
+            case INS_LDA_IND_Y:
+            {
+                Word address = ReadWord(_cycles, _memory);
+                address %= 0xFF;
+                address += Y;
+                A = FetchWord(_cycles, address, _memory);
                 LDASetStatus();
             }
             break;
