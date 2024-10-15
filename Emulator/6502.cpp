@@ -66,6 +66,10 @@ public:
 
 struct CPU
 {
+
+#pragma region PRIVATE MEMBERS
+
+private:
     Word PC; // Program counter
     Word SP; // Stack pointer
 
@@ -82,17 +86,14 @@ struct CPU
     Byte V : 1; // Overflow flag bit
     Byte N : 1; // Negative flag bit
 
-    // Processes
-    void Reset(Memory &_memory)
-    {
-        PC = 0xFFFC;                   // Set program counter
-        SP = 0x0100;                   // Set Stack pointer
-        C = Z = I = D = B = V = N = 0; // Reset all flags
-        A = X = Y = 0;                 // Reset all registers
+#pragma endregion // PRIVATE MEMBERS
 
-        _memory.Initialize();
-    }
+#pragma region PRIVATE METHODS
 
+private:
+    // Memory Lookup Methods
+
+    // 'Fetch' as in 'Go look for it in this address
     Byte FetchByte(u32 &_cycles, Byte _address, Memory &_memory)
     {
         Byte data = _memory[_address];
@@ -108,6 +109,7 @@ struct CPU
         return data;
     }
 
+    // 'Read' as in 'Look for it in the spot that the PC is pointing to'
     Byte ReadByte(u32 &_cycles, Memory &_memory)
     {
         Byte data = _memory[PC];
@@ -125,12 +127,19 @@ struct CPU
         return data;
     }
 
+    // Flag status changes
+
     void LDASetStatus()
     {
         Z = (A == 0);
         N = (A & 0b10000000) > 0;
     }
 
+#pragma endregion // PRIVATE METHODS
+
+#pragma region INSTRUCTION CODES
+
+public:
     static constexpr Byte INS_NOP = 0xEA;
     static constexpr Byte INS_LDA_IM = 0xA9;
     static constexpr Byte INS_LDA_ZP = 0xA5;
@@ -139,6 +148,21 @@ struct CPU
     static constexpr Byte INS_JMP_ABS = 0x4C;
     static constexpr Byte INS_JMP_IND = 0x6C;
     static constexpr Byte INS_JSR = 0x20;
+
+#pragma endregion // INSTRUCTION CODES
+
+#pragma region PUBLIC METHODS
+
+public:
+    void Reset(Memory &_memory)
+    {
+        PC = 0xFFFC;                   // Set program counter
+        SP = 0x0100;                   // Set Stack pointer
+        C = Z = I = D = B = V = N = 0; // Reset all flags
+        A = X = Y = 0;                 // Reset all registers
+
+        _memory.Initialize();
+    }
 
     void Execute(u32 _cycles, Memory &_memory)
     {
@@ -215,4 +239,6 @@ struct CPU
             }
         }
     }
+
+#pragma endregion // PUBLIC METHODS
 };
